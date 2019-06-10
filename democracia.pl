@@ -15,7 +15,7 @@ edad(jackie, 38).
 edad(linda, 30).
 edad(catherine, 59).
 edad(heather, EdadHeather):-
-	EdadHeather is 2019 - 1969.
+	EdadHeather is (2019 - 1969).
 
 
 sePostulaEn(azul, buenosAires).
@@ -102,6 +102,7 @@ intencionDeVotoEn(misiones, rojo, 90).
 intencionDeVotoEn(misiones, azul, 0).
 intencionDeVotoEn(misiones, amarillo, 0).
 
+% PUNTO 2 PROVINCIA PICANTE
 
 masDe1Candidato(Provincia):-
   sePostulaEn(Candidato,Provincia),
@@ -118,10 +119,7 @@ esPicante(Provincia):-
   masDe1Candidato(Provincia).
 
 
-%Modelar el predicado leGanaA/3 el cual relaciona a dos candidatos y una provincia, y nos dice si un candidato le ganaría a otro en una provincia. Para ello: 
-%  El partido del ganador debe competir en la provincia. 
-%  Si el partido del perdedor también compite en la provincia, se evalúa el que tenga el mayor porcentaje de votos en la provincia. Si hay empate, no se cumple la relación.
-%  Si ambos candidatos pertenecen al mismo partido, la relación se cumple si el partido compite en la provincia. 
+% PUNTO 3 PASO
 
 compiteEnProvincia(UnCandidato, UnaProvincia):-
 	esCandidatoDel(UnCandidato, UnPartido),
@@ -148,9 +146,7 @@ leGanaA(Candidato1,Candidato2,UnaProvincia):-
   compiteEnProvincia(Candidato1,UnaProvincia).
 
 
-%Se pide realizar elGranCandidato/1. Un candidato es el gran candidato si se cumple:
-% Para todas las provincias en las cuales su partido compite, el mismo gana.
-% Es el candidato más joven de su partido
+% PUNTO 4 EL GRAN CANDIDATO
 
 esMasJovenQue(UnCandidato,OtroCandidato):-
     edad(UnCandidato,Edad1),
@@ -165,8 +161,10 @@ elGranCandidato(UnCandidato):-
     forall(compiteEnProvincia(UnCandidato,UnaProvincia),leGanaA(UnCandidato,_,UnaProvincia)),
     candidatoMasJovenDelPartido(UnCandidato).
 
+% podemos asegurarnos de esto usando la consulta existencia elGranCandidato(UnCandidato). Se relaciona con el concepto de inversibilidad. 
 
-% PUNTO 5
+
+% PUNTO 5 MALAS CONSULTORAS
 
 ganaElPartidoEnLaProvincia(UnPartido,UnaProvincia):-
   esCandidatoDel(UnCandidato,UnPartido),
@@ -182,8 +180,62 @@ ajusteConsultora(UnPartido,UnaProvincia,VerdaderoPorcentajeDeVotos):-
   intencionDeVotoEn(UnaProvincia,UnPartido,PorcentajeDeVotos),
   VerdaderoPorcentajeDeVotos is PorcentajeDeVotos + 5.
 
-  /*6 Promesas de campaña
+% PUNTO 6 PROMESAS DE CAMPAÑAS
 
-Cada vez estamos más cerca del gran día, aquel en donde hacemos valer nuestros derechos como ciudadanos y ciudadanas.
- Pero antes de votar debemos informarnos sobre cuáles son las promesas de cada partido, representadas con functores:
-*/
+% inflacion(cotaInferior, cotaSuperior)
+% construir(listaDeObras)
+% nuevosPuestosDeTrabajo(cantidad)
+
+promete(azul, edilicio(hospital, 1000)).
+promete(azul, edilicio(jardin, 100)).
+promete(azul, edilicio(escuela, 5)).
+promete(amarillo, edilicio(hospital, 100)).
+promete(amarillo, edilicio(universidad, 1)).
+promete(amarillo, edilicio(comisaria, 200)).
+promete(rojo, nuevosPuestosDeTrabajo(800000)).
+promete(amarillo, nuevosPuestosDeTrabajo(10000)).
+promete(azul, inflacion(2,4)).
+promete(amarillo, inflacion(1,15)).
+promete(rojo, inflacion(10,30)).
+
+
+% PUNTO 7 AJUSTES DE BOCA DE URNA
+
+influenciaDePromesas(inflacion(CotaInferior,CotaSuperior), Variacion):-
+  Variacion is (-(CotaSuperior + CotaInferior)/2).
+
+influenciaDePromesas(nuevosPuestosDeTrabajo(CantidadDePuestos), Variacion):-
+  CantidadDePuestos > 50000,
+  Variacion is (3).
+influenciaDePromesas(nuevosPuestosDeTrabajo(CantidadDePuestos), Variacion):-
+  CantidadDePuestos < 50001,
+  Variacion is (0).
+
+influenciaDePromesas(edilicio(hospital,_), Variacion):-
+  Variacion is (2).
+
+influenciaDePromesas(edilicio(jardin,Cantidad), Variacion):-
+  Variacion is (Cantidad * 0.1).
+
+influenciaDePromesas(edilicio(escuela,Cantidad), Variacion):-
+  Variacion is (Cantidad * 0.1).
+
+influenciaDePromesas(edilicio(universidad,_), Variacion):-
+  Variacion is (0).
+
+influenciaDePromesas(edilicio(,), Variacion):-
+  Variacion is (0).
+
+% PUNTO 8 NUEVOS VOTOS
+
+crecimientos(UnPartido, UnCrecimiento):-
+  promete(UnPartido, UnaPromesa),
+  influenciaDePromesas(UnaPromesa, Variacion),
+  UnCrecimiento is (Variacion).
+
+ promedioDeCrecimiento(UnPartido, Sumatoria):-
+  findall(UnCrecimiento, crecimientos(UnPartido, UnCrecimiento), Crecimientos),
+  sumlist(Crecimientos, Total),
+  Sumatoria is Total.
+
+  %no queda claro en la consigna si es el promedio o la sumatoria
