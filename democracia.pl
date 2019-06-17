@@ -121,32 +121,34 @@ esPicante(Provincia):-
 
 % PUNTO 3 PASO
 
-compiteEnProvincia(UnCandidato, UnaProvincia):-
-	esCandidatoDel(UnCandidato, UnPartido),
-	sePostulaEn(UnPartido, UnaProvincia).
-
-tieneMasVotos(Candidato1, Candidato2,UnaProvincia):-
-  esCandidatoDel(Candidato1,Partido1),
-  esCandidatoDel(Candidato2,Partido2),
+tieneMasVotos(Partido1, Partido2,UnaProvincia):-
   intencionDeVotoEn(UnaProvincia,Partido1,Porcentaje1),
   intencionDeVotoEn(UnaProvincia,Partido2,Porcentaje2),
   Porcentaje1 > Porcentaje2.
 
 leGanaA(Candidato1, Candidato2, UnaProvincia):-
-	compiteEnProvincia(Candidato1, UnaProvincia),
-	compiteEnProvincia(Candidato2, UnaProvincia),
-	tieneMasVotos(Candidato1,Candidato2,UnaProvincia).
+  esCandidatoDel(Candidato1, Partido1),
+  esCandidatoDel(Candidato2, Partido2),
+  sePostulaEn(Partido1, Provincia),
+  not(sePostulaEn(Partido2, Provincia)).
+
+leGanaA(Candidato1, Candidato2, UnaProvincia):-
+	esCandidatoDel(Candidato1, Partido),
+  esCandidatoDel(Candidato2, Partido),
+  sePostulaEn(Partido, UnaProvincia).
 
 leGanaA(Candidato1,Candidato2,UnaProvincia):-
-  esCandidatoDel(Candidato1,UnPartido),
-  esCandidatoDel(Candidato2,UnPartido),
-  compiteEnProvincia(Candidato1,UnaProvincia).
-
-leGanaA(Candidato1,Candidato2,UnaProvincia):-
-  compiteEnProvincia(Candidato1,UnaProvincia).
+  esCandidatoDel(Candidato1,Partido1),
+  esCandidatoDel(Candidato2,Partido2),
+  sePostulaEn(Partido1,UnaProvincia),
+  tieneMasVotos(Partido1, Partido2, UnaProvincia).
 
 
 % PUNTO 4 EL GRAN CANDIDATO
+
+compiteEnProvincia(UnCandidato, UnaProvincia):-
+  esCandidatoDel(UnCandidato, UnPartido),
+  sePostulaEn(UnPartido, UnaProvincia).
 
 esMasJovenQue(UnCandidato,OtroCandidato):-
     edad(UnCandidato,Edad1),
@@ -155,7 +157,7 @@ esMasJovenQue(UnCandidato,OtroCandidato):-
 
 candidatoMasJovenDelPartido(UnCandidato):-
 	esCandidatoDel(UnCandidato,UnPartido),
-	forall(esCandidatoDel(OtroCandidato,UnPartido), esMasJovenQue(UnCandidato,OtroCandidato)).
+	forall((esCandidatoDel(OtroCandidato,UnPartido), OtroCandidato \= UnCandidato), esMasJovenQue(UnCandidato,OtroCandidato)).
 
 elGranCandidato(UnCandidato):-
     forall(compiteEnProvincia(UnCandidato,UnaProvincia),leGanaA(UnCandidato,_,UnaProvincia)),
@@ -186,12 +188,8 @@ ajusteConsultora(UnPartido,UnaProvincia,VerdaderoPorcentajeDeVotos):-
 % construir(listaDeObras)
 % nuevosPuestosDeTrabajo(cantidad)
 
-promete(azul, edilicio(hospital, 1000)).
-promete(azul, edilicio(jardin, 100)).
-promete(azul, edilicio(escuela, 5)).
-promete(amarillo, edilicio(hospital, 100)).
-promete(amarillo, edilicio(universidad, 1)).
-promete(amarillo, edilicio(comisaria, 200)).
+promete(azul, construir([edilicio(hospital, 1000), edilicio(jardin, 100), edilicio(escuela, 5)])).
+promete(amarillo, construir([edilicio(hospital, 100),edilicio(universidad, 1),edilicio(comisaria, 200)])).
 promete(rojo, nuevosPuestosDeTrabajo(800000)).
 promete(amarillo, nuevosPuestosDeTrabajo(10000)).
 promete(azul, inflacion(2,4)).
@@ -204,38 +202,45 @@ promete(rojo, inflacion(10,30)).
 influenciaDePromesas(inflacion(CotaInferior,CotaSuperior), Variacion):-
   Variacion is (-(CotaSuperior + CotaInferior)/2).
 
-influenciaDePromesas(nuevosPuestosDeTrabajo(CantidadDePuestos), Variacion):-
-  CantidadDePuestos > 50000,
-  Variacion is (3).
-influenciaDePromesas(nuevosPuestosDeTrabajo(CantidadDePuestos), Variacion):-
-  CantidadDePuestos < 50001,
-  Variacion is (0).
+influenciaDePromesas(nuevosPuestosDeTrabajo(CantidadDePuestos), 3):-
+  CantidadDePuestos > 50000.
 
-influenciaDePromesas(edilicio(hospital,_), Variacion):-
-  Variacion is (2).
+influenciaDePromesas(construir(Obras), VariacionTotal):-
+  findall(Variacion, influenciaDeObras(Obras,Variacion),Variaciones),
+  sumlist(Variaciones,VariacionTotal).
 
-influenciaDePromesas(edilicio(jardin,Cantidad), Variacion):-
-  Variacion is (Cantidad * 0.1).
+influenciaDeObras(Obras,2):-
+  member(edilicio(hospital,_),Obras).
 
-influenciaDePromesas(edilicio(escuela,Cantidad), Variacion):-
-  Variacion is (Cantidad * 0.1).
+influenciaDeObras(Obras,Variacion):-
+  member(edilicio(jardin,Cantidad),Obras),
+  Variacion is 0.1*Cantidad.
+  
+influenciaDeObras(Obras,Variacion):-
+  member(edilicio(escuela,Cantidad),Obras),
+  Variacion is 0.1*Cantidad.
 
-influenciaDePromesas(edilicio(universidad,_), Variacion):-
-  Variacion is (0).
+influenciaDeObras(Obras,2):-
+  member(edilicio(comisaria,200),Obras).
 
-influenciaDePromesas(edilicio(,), Variacion):-
-  Variacion is (0).
+influenciaDeObras(Obras,0):-
+  member(edilicio(universidad,_),Obras).
+
+influenciaDeObras(Obras,Variacion):-
+  member(edilicio(Edificio,Cantidad),Obras),
+  Edificio \= hospital,
+  Edificio \= jardin,
+  Edificio \= escuela,
+  Edificio \= comisaria,
+  Edificio \= universidad,
+  Variacion is -1*Cantidad.
 
 % PUNTO 8 NUEVOS VOTOS
 
-crecimientos(UnPartido, UnCrecimiento):-
-  promete(UnPartido, UnaPromesa),
-  influenciaDePromesas(UnaPromesa, Variacion),
-  UnCrecimiento is (Variacion).
-
- promedioDeCrecimiento(UnPartido, Sumatoria):-
-  findall(UnCrecimiento, crecimientos(UnPartido, UnCrecimiento), Crecimientos),
+ promedioDeCrecimiento(UnPartido, Promedio):-
+  findall(UnCrecimiento, (promete(UnPartido, UnaPromesa),influenciaDePromesas(UnaPromesa, UnCrecimiento)), Crecimientos),
+  length(Crecimientos, CantidadDePromesas),
   sumlist(Crecimientos, Total),
-  Sumatoria is Total.
+  Promedio is Total / CantidadDePromesas.
 
   %no queda claro en la consigna si es el promedio o la sumatoria
