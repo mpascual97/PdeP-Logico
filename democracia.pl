@@ -206,28 +206,22 @@ influenciaDePromesas(nuevosPuestosDeTrabajo(CantidadDePuestos), 3):-
   CantidadDePuestos > 50000.
 
 influenciaDePromesas(construir(Obras), VariacionTotal):-
-  findall(Variacion, influenciaDeObras(Obras,Variacion),Variaciones),
+  findall(Variacion, (member(Obra, Obras), influenciaDeObras(Obra, Variacion)), Variaciones),  
   sumlist(Variaciones,VariacionTotal).
 
-influenciaDeObras(Obras,2):-
-  member(edilicio(hospital,_),Obras).
+influenciaDeObras(edilicio(hospital,_),2).
 
-influenciaDeObras(Obras,Variacion):-
-  member(edilicio(jardin,Cantidad),Obras),
+influenciaDeObras(edilicio(jardin,Cantidad),Variacion):-
   Variacion is 0.1*Cantidad.
   
-influenciaDeObras(Obras,Variacion):-
-  member(edilicio(escuela,Cantidad),Obras),
+influenciaDeObras(edilicio(escuela,Cantidad),Variacion):-
   Variacion is 0.1*Cantidad.
 
-influenciaDeObras(Obras,2):-
-  member(edilicio(comisaria,200),Obras).
+influenciaDeObras(edilicio(comisaria,200),2).
 
-influenciaDeObras(Obras,0):-
-  member(edilicio(universidad,_),Obras).
+influenciaDeObras(edilicio(universidad,_),0).
 
-influenciaDeObras(Obras,Variacion):-
-  member(edilicio(Edificio,Cantidad),Obras),
+influenciaDeObras(edilicio(Edificio,Cantidad),Variacion):-
   Edificio \= hospital,
   Edificio \= jardin,
   Edificio \= escuela,
@@ -238,6 +232,7 @@ influenciaDeObras(Obras,Variacion):-
 % PUNTO 8 NUEVOS VOTOS
 
  promedioDeCrecimiento(UnPartido, Promedio):-
+  sePostulaEn(UnPartido,_),
   findall(UnCrecimiento, (promete(UnPartido, UnaPromesa),influenciaDePromesas(UnaPromesa, UnCrecimiento)), Crecimientos),
   length(Crecimientos, CantidadDePromesas),
   sumlist(Crecimientos, Total),
